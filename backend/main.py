@@ -68,6 +68,11 @@ def analyze_paper(request: AnalyzeRequest):
     stylometry_results = analyze_stylometry(paper_text, reviews)
     specificity_results = analyze_specificity(reviews, abstract)
     
+    # Inject paper_id into reviews for the graph builder
+    for rev in reviews:
+        if "paper_id" not in rev:
+            rev["paper_id"] = or_data.get("paper_id") or or_data.get("id") or "unknown"
+            
     # We build a graph based on this single paper for now, 
     # but in a real scenario we'd query the whole venue.
     collusion_graph = build_collusion_graph([or_data], reviews)
