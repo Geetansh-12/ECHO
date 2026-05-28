@@ -216,10 +216,15 @@ def health_check():
 
 @app.get("/api/sources/health")
 def sources_health_check():
+    import os
+    os.environ["HTTP_PROXY"] = ""
+    os.environ["HTTPS_PROXY"] = ""
+    os.environ["http_proxy"] = ""
+    os.environ["https_proxy"] = ""
     statuses: dict[str, Any] = {}
 
     try:
-        response = requests.get("https://api2.openreview.net/notes", timeout=8)
+        response = requests.get("https://api2.openreview.net/notes", timeout=8, proxies={"http": "", "https": ""})
         reachable = response.status_code in {200, 400, 401, 403}
         statuses["openreview"] = {
             "status": "connected" if reachable else "degraded",
@@ -230,7 +235,8 @@ def sources_health_check():
         statuses["openreview"] = {"status": "disconnected", "reason": str(exc)}
 
     try:
-        with urllib.request.urlopen(
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(
             "http://export.arxiv.org/api/query?search_query=all:transformer&start=0&max_results=1",
             timeout=8,
         ) as response:
@@ -248,6 +254,7 @@ def sources_health_check():
             "https://api.semanticscholar.org/graph/v1/paper/search",
             params={"query": "transformer", "limit": 1, "fields": "title"},
             timeout=8,
+            proxies={"http": "", "https": ""}
         )
         if response.status_code == 200:
             status = "connected"

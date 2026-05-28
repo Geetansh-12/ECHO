@@ -171,9 +171,9 @@ LEFT JOIN semantic_scholar.papers ss ON or.title = ss.title`
                 </pre>
                 
                 <div style={{ display: "flex", gap: "12px", marginTop: "24px", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "20px" }}>
-                  <button className="primary-btn" style={{ padding: "8px 16px", fontSize: "0.9rem" }}>
+                  <Link href="/dashboard?q=Attention+Is+All+You+Need&auto=1" className="primary-btn" style={{ padding: "8px 16px", fontSize: "0.9rem", textDecoration: "none" }}>
                     <Play size={16} /> Run Analysis
-                  </button>
+                  </Link>
                   <button className="ghost-btn" style={{ padding: "8px 16px", fontSize: "0.9rem" }}>
                     <Copy size={16} /> Copy Query
                   </button>

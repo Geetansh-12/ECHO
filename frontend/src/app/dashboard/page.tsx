@@ -111,6 +111,17 @@ export default function Dashboard() {
     return () => window.clearTimeout(timeoutId);
   }, [runAnalysis]);
 
+  useEffect(() => {
+    if (reportData && !loading) {
+      window.setTimeout(() => {
+        document.getElementById("analysis-results")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    }
+  }, [reportData, loading]);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     await runAnalysis(query);
@@ -118,13 +129,8 @@ export default function Dashboard() {
 
   const inspectQueuedPaper = async (paperTitle: string) => {
     setQuery(paperTitle);
+    window.scrollTo({ top: 0, behavior: "smooth" });
     await runAnalysis(paperTitle);
-    window.setTimeout(() => {
-      document.getElementById("analysis-results")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 80);
   };
 
   return (

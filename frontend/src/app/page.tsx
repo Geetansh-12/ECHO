@@ -153,7 +153,7 @@ function Navbar() {
           </Link>
         </Button>
         <Button asChild size="sm">
-          <Link href="/dashboard">Login</Link>
+          <Link href="/login">Login</Link>
         </Button>
       </div>
     </header>
