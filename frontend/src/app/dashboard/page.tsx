@@ -116,6 +116,17 @@ export default function Dashboard() {
     await runAnalysis(query);
   };
 
+  const inspectQueuedPaper = async (paperTitle: string) => {
+    setQuery(paperTitle);
+    await runAnalysis(paperTitle);
+    window.setTimeout(() => {
+      document.getElementById("analysis-results")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
+  };
+
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       {/* Sidebar */}
@@ -214,7 +225,7 @@ export default function Dashboard() {
         )}
 
         {!loading && reportData && (
-          <div style={{ marginBottom: "60px" }}>
+          <div id="analysis-results" style={{ marginBottom: "60px" }}>
              <Report data={reportData} />
           </div>
         )}
@@ -311,7 +322,14 @@ export default function Dashboard() {
                       </div>
                       <h4 style={{ fontSize: "0.95rem", marginBottom: "8px" }}>Attention Is All You Need</h4>
                       <p className="text-secondary" style={{ fontSize: "0.85rem", marginBottom: "12px" }}>Stylometric fingerprint match detected between Author 2 and Reviewer 4.</p>
-                      <button className="ghost-btn" style={{ width: "100%", padding: "8px", fontSize: "0.85rem" }}><Eye size={14}/> Inspect Graph</button>
+                      <button
+                        className="ghost-btn"
+                        type="button"
+                        style={{ width: "100%", padding: "8px", fontSize: "0.85rem", cursor: "pointer" }}
+                        onClick={() => void inspectQueuedPaper("Attention Is All You Need")}
+                      >
+                        <Eye size={14}/> Inspect Graph
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -329,7 +347,14 @@ export default function Dashboard() {
                       </div>
                       <h4 style={{ fontSize: "0.95rem", marginBottom: "8px" }}>Denoising Diffusion Probabilistic Models</h4>
                       <p className="text-secondary" style={{ fontSize: "0.85rem", marginBottom: "12px" }}>Review 2 shows generic phrasing with low specificity entropy (4.2).</p>
-                      <button className="ghost-btn" style={{ width: "100%", padding: "8px", fontSize: "0.85rem" }}><Eye size={14}/> Inspect Report</button>
+                      <button
+                        className="ghost-btn"
+                        type="button"
+                        style={{ width: "100%", padding: "8px", fontSize: "0.85rem", cursor: "pointer" }}
+                        onClick={() => void inspectQueuedPaper("Denoising Diffusion Probabilistic Models")}
+                      >
+                        <Eye size={14}/> Inspect Report
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -347,7 +372,13 @@ export default function Dashboard() {
                       </div>
                       <h4 style={{ fontSize: "0.95rem", marginBottom: "8px" }}>BERT: Pre-training of Deep Bidirectional Transformers</h4>
                       <p className="text-secondary" style={{ fontSize: "0.85rem", marginBottom: "12px" }}>No anomalies detected. High specificity and distinct stylometry.</p>
-                      <button className="ghost-btn" style={{ width: "100%", padding: "8px", fontSize: "0.85rem" }}><Eye size={14}/> View Logs</button>
+                      <Link
+                        className="ghost-btn"
+                        href="/sources"
+                        style={{ width: "100%", padding: "8px", fontSize: "0.85rem", justifyContent: "center", textDecoration: "none" }}
+                      >
+                        <Eye size={14}/> View Logs
+                      </Link>
                     </div>
                   </div>
                 </div>
