@@ -1,0 +1,26 @@
+[
+  {
+    "id": "bm-1",
+    "query": "Attention Is All You Need",
+    "venue_id": "ICLR.cc/2024/Conference",
+    "label": "suspicious"
+  },
+  {
+    "id": "bm-2",
+    "query": "Position: The role of open source in AI",
+    "venue_id": "ICLR.cc/2024/Conference",
+    "label": "suspicious"
+  },
+  {
+    "id": "bm-3",
+    "query": "Neural Information Processing Systems survey",
+    "venue_id": "ICLR.cc/2024/Conference",
+    "label": "good"
+  },
+  {
+    "id": "bm-4",
+    "query": "BERT: Pre-training of Deep Bidirectional Transformers",
+    "venue_id": "ICLR.cc/2024/Conference",
+    "label": "good"
+  }
+]

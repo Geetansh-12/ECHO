@@ -39,13 +39,7 @@ interface StatsResponse {
   low_risk_cases: number;
 }
 
-interface AnalyzeResponse {
-  status: string;
-  paper?: {
-    title?: string;
-  };
-  results?: unknown;
-}
+type AnalyzeResponse = React.ComponentProps<typeof Report>["data"];
 
 export default function Dashboard() {
   const [query, setQuery] = useState("");

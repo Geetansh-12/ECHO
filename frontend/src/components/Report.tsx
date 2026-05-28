@@ -55,6 +55,8 @@ export default function Report({ data }: ReportProps) {
 
   const { stylometry, specificity, collusion } = data.results;
   const risk = data.risk_assessment;
+  const paperTitle = data.paper?.title || "Untitled paper";
+  const paperAbstract = data.paper?.abstract || "No abstract available.";
 
   const handleExport = () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -70,11 +72,11 @@ export default function Report({ data }: ReportProps) {
     <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: "24px" }}>
       <div className="glass-panel" style={{ borderTop: "4px solid var(--accent-cyan)" }}>
         <div className="flex-between" style={{ gap: "12px", marginBottom: "12px" }}>
-          <h2 style={{ marginBottom: "0" }}>ECHO Report: {data.paper.title}</h2>
+          <h2 style={{ marginBottom: "0" }}>ECHO Report: {paperTitle}</h2>
           <button className="ghost-btn" onClick={handleExport}>Export JSON</button>
         </div>
         <p className="text-secondary" style={{ fontSize: "0.9rem", lineHeight: "1.5" }}>
-          {data.paper.abstract.substring(0, 300)}...
+          {paperAbstract.substring(0, 300)}...
         </p>
       </div>
 
