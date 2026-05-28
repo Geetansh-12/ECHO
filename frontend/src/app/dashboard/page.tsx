@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import { 
@@ -20,7 +20,7 @@ import {
   Eye
 } from "lucide-react";
 
-import Report from "../../components/Report";
+import Report, { type EchoReportData } from "../../components/Report";
 
 interface HistoryItem {
   id: number;
@@ -39,7 +39,7 @@ interface StatsResponse {
   low_risk_cases: number;
 }
 
-type AnalyzeResponse = React.ComponentProps<typeof Report>["data"];
+type AnalyzeResponse = EchoReportData;
 
 export default function Dashboard() {
   const [query, setQuery] = useState("");
@@ -48,6 +48,7 @@ export default function Dashboard() {
   const [reportData, setReportData] = useState<AnalyzeResponse | null>(null);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const autoRunRef = useRef(false);
 
   const loadAnalytics = async () => {
     try {
@@ -62,16 +63,8 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void loadAnalytics();
-    }, 0);
-    return () => window.clearTimeout(timeoutId);
-  }, []);
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query) return;
+  const runAnalysis = useCallback(async (paperQuery: string) => {
+    if (!paperQuery) return;
 
     setLoading(true);
     setError("");
@@ -79,7 +72,7 @@ export default function Dashboard() {
 
     try {
       const response = await axios.post<AnalyzeResponse>("/api/analyze", {
-        query: query
+        query: paperQuery,
       });
       setReportData(response.data);
       void loadAnalytics();
@@ -92,6 +85,35 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadAnalytics();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const seededQuery = params.get("q");
+    const shouldAutoRun = params.get("auto") === "1";
+    if (!seededQuery) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setQuery(seededQuery);
+      if (shouldAutoRun && !autoRunRef.current) {
+        autoRunRef.current = true;
+        void runAnalysis(seededQuery);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [runAnalysis]);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await runAnalysis(query);
   };
 
   return (
@@ -107,10 +129,10 @@ export default function Dashboard() {
         top: 0, bottom: 0, left: 0,
         zIndex: 10
       }}>
-        <div style={{ padding: "24px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid var(--border-color)" }}>
+        <Link href="/" style={{ padding: "24px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid var(--border-color)", textDecoration: "none" }}>
           <ShieldAlert className="text-cyan" size={28} />
           <h2 style={{ margin: 0, fontSize: "1.5rem", letterSpacing: "0.1em" }} className="text-gradient">ECHO</h2>
-        </div>
+        </Link>
         
         <nav style={{ padding: "24px 16px", flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
           <Link href="/dashboard" style={{ 

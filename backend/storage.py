@@ -1,10 +1,12 @@
 import json
+import logging
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 DB_PATH = Path(__file__).resolve().parent / "echo.db"
+logger = logging.getLogger(__name__)
 
 
 def _get_connection() -> sqlite3.Connection:
@@ -14,94 +16,115 @@ def _get_connection() -> sqlite3.Connection:
 
 
 def init_db() -> None:
-    with _get_connection() as conn:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS analyses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                query TEXT NOT NULL,
-                venue_id TEXT NOT NULL,
-                status TEXT NOT NULL,
-                risk_score REAL NOT NULL,
-                verdict TEXT NOT NULL,
-                paper_title TEXT,
-                suspicious_matches INTEGER DEFAULT 0,
-                slop_ratio REAL DEFAULT 0,
-                ring_count INTEGER DEFAULT 0,
-                payload TEXT NOT NULL,
-                created_at TEXT NOT NULL
+    try:
+        with _get_connection() as conn:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS analyses (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    query TEXT NOT NULL,
+                    venue_id TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    risk_score REAL NOT NULL,
+                    verdict TEXT NOT NULL,
+                    paper_title TEXT,
+                    suspicious_matches INTEGER DEFAULT 0,
+                    slop_ratio REAL DEFAULT 0,
+                    ring_count INTEGER DEFAULT 0,
+                    payload TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+                """
             )
-            """
-        )
-        conn.commit()
+            conn.commit()
+    except sqlite3.Error as exc:
+        logger.warning("Starting without SQLite persistence: %s", exc)
 
 
 def save_analysis(summary: dict[str, Any], payload: dict[str, Any]) -> None:
-    with _get_connection() as conn:
-        conn.execute(
-            """
-            INSERT INTO analyses (
-                query, venue_id, status, risk_score, verdict, paper_title,
-                suspicious_matches, slop_ratio, ring_count, payload, created_at
+    try:
+        with _get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO analyses (
+                    query, venue_id, status, risk_score, verdict, paper_title,
+                    suspicious_matches, slop_ratio, ring_count, payload, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    summary.get("query", ""),
+                    summary.get("venue_id", ""),
+                    summary.get("status", "unknown"),
+                    float(summary.get("risk_score", 0)),
+                    summary.get("verdict", "Unknown"),
+                    summary.get("paper_title"),
+                    int(summary.get("suspicious_matches", 0)),
+                    float(summary.get("slop_ratio", 0)),
+                    int(summary.get("ring_count", 0)),
+                    json.dumps(payload),
+                    datetime.now(timezone.utc).isoformat(),
+                ),
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                summary.get("query", ""),
-                summary.get("venue_id", ""),
-                summary.get("status", "unknown"),
-                float(summary.get("risk_score", 0)),
-                summary.get("verdict", "Unknown"),
-                summary.get("paper_title"),
-                int(summary.get("suspicious_matches", 0)),
-                float(summary.get("slop_ratio", 0)),
-                int(summary.get("ring_count", 0)),
-                json.dumps(payload),
-                datetime.now(timezone.utc).isoformat(),
-            ),
-        )
-        conn.commit()
+            conn.commit()
+    except sqlite3.Error as exc:
+        logger.warning("Skipping analysis persistence because SQLite is unavailable: %s", exc)
 
 
 def list_recent_analyses(limit: int = 20) -> list[dict[str, Any]]:
     safe_limit = max(1, min(limit, 100))
-    with _get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT
-                id, query, venue_id, status, risk_score, verdict, paper_title,
-                suspicious_matches, slop_ratio, ring_count, created_at
-            FROM analyses
-            ORDER BY id DESC
-            LIMIT ?
-            """,
-            (safe_limit,),
-        ).fetchall()
-        return [dict(row) for row in rows]
+    try:
+        with _get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT
+                    id, query, venue_id, status, risk_score, verdict, paper_title,
+                    suspicious_matches, slop_ratio, ring_count, created_at
+                FROM analyses
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (safe_limit,),
+            ).fetchall()
+            return [dict(row) for row in rows]
+    except sqlite3.Error as exc:
+        logger.warning("Returning empty history because SQLite is unavailable: %s", exc)
+        return []
 
 
 def get_stats() -> dict[str, Any]:
-    with _get_connection() as conn:
-        totals = conn.execute(
-            """
-            SELECT
-                COUNT(*) AS total_analyses,
-                AVG(risk_score) AS avg_risk_score,
-                SUM(CASE WHEN verdict = 'High Risk' THEN 1 ELSE 0 END) AS high_risk_cases,
-                SUM(CASE WHEN verdict = 'Medium Risk' THEN 1 ELSE 0 END) AS medium_risk_cases,
-                SUM(CASE WHEN verdict = 'Low Risk' THEN 1 ELSE 0 END) AS low_risk_cases
-            FROM analyses
-            """
-        ).fetchone()
+    try:
+        with _get_connection() as conn:
+            totals = conn.execute(
+                """
+                SELECT
+                    COUNT(*) AS total_analyses,
+                    AVG(risk_score) AS avg_risk_score,
+                    SUM(CASE WHEN verdict = 'High Risk' THEN 1 ELSE 0 END) AS high_risk_cases,
+                    SUM(CASE WHEN verdict = 'Medium Risk' THEN 1 ELSE 0 END) AS medium_risk_cases,
+                    SUM(CASE WHEN verdict = 'Low Risk' THEN 1 ELSE 0 END) AS low_risk_cases
+                FROM analyses
+                """
+            ).fetchone()
 
-        latest = conn.execute(
-            """
-            SELECT created_at
-            FROM analyses
-            ORDER BY id DESC
-            LIMIT 1
-            """
-        ).fetchone()
+            latest = conn.execute(
+                """
+                SELECT created_at
+                FROM analyses
+                ORDER BY id DESC
+                LIMIT 1
+                """
+            ).fetchone()
+    except sqlite3.Error as exc:
+        logger.warning("Returning empty stats because SQLite is unavailable: %s", exc)
+        return {
+            "total_analyses": 0,
+            "avg_risk_score": 0,
+            "high_risk_cases": 0,
+            "medium_risk_cases": 0,
+            "low_risk_cases": 0,
+            "last_analyzed_at": None,
+        }
 
     return {
         "total_analyses": int(totals["total_analyses"] or 0),

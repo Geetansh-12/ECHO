@@ -95,10 +95,10 @@ LEFT JOIN semantic_scholar.papers ss ON or.title = ss.title`
         top: 0, bottom: 0, left: 0,
         zIndex: 10
       }}>
-        <div style={{ padding: "24px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid var(--border-color)" }}>
+        <Link href="/" style={{ padding: "24px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid var(--border-color)", textDecoration: "none" }}>
           <ShieldAlert className="text-cyan" size={28} />
           <h2 style={{ margin: 0, fontSize: "1.5rem", letterSpacing: "0.1em" }} className="text-gradient">ECHO</h2>
-        </div>
+        </Link>
         
         <nav style={{ padding: "24px 16px", flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
           <Link href="/dashboard" style={{ 

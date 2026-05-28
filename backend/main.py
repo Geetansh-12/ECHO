@@ -4,6 +4,11 @@ from pydantic import BaseModel
 import uvicorn
 import logging
 from typing import Any
+import base64
+import io
+import requests
+import urllib.request
+import uuid
 
 from fetchers.openreview import fetch_paper_and_reviews
 from fetchers.arxiv import fetch_arxiv_metadata
@@ -11,6 +16,13 @@ from analyzers.stylometry import analyze_stylometry
 from analyzers.specificity import analyze_specificity
 from analyzers.collusion import build_collusion_graph
 from storage import get_stats, init_db, list_recent_analyses, save_analysis
+
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+except Exception:
+    letter = None
+    canvas = None
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -200,6 +212,96 @@ def get_analysis_stats():
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "service": "echo-backend"}
+
+
+@app.get("/api/sources/health")
+def sources_health_check():
+    statuses: dict[str, Any] = {}
+
+    try:
+        response = requests.get("https://api2.openreview.net/notes", timeout=8)
+        reachable = response.status_code in {200, 400, 401, 403}
+        statuses["openreview"] = {
+            "status": "connected" if reachable else "degraded",
+            "http_code": response.status_code,
+            "reason": "API reachable" if reachable else "Unexpected response code",
+        }
+    except Exception as exc:
+        statuses["openreview"] = {"status": "disconnected", "reason": str(exc)}
+
+    try:
+        with urllib.request.urlopen(
+            "http://export.arxiv.org/api/query?search_query=all:transformer&start=0&max_results=1",
+            timeout=8,
+        ) as response:
+            body = response.read(64)
+            statuses["arxiv"] = {
+                "status": "connected" if body else "degraded",
+                "http_code": response.status,
+                "reason": "API reachable" if body else "Empty response body",
+            }
+    except Exception as exc:
+        statuses["arxiv"] = {"status": "disconnected", "reason": str(exc)}
+
+    try:
+        response = requests.get(
+            "https://api.semanticscholar.org/graph/v1/paper/search",
+            params={"query": "transformer", "limit": 1, "fields": "title"},
+            timeout=8,
+        )
+        if response.status_code == 200:
+            status = "connected"
+            reason = "API reachable"
+        elif response.status_code == 429:
+            status = "degraded"
+            reason = "Rate limited"
+        else:
+            status = "degraded"
+            reason = "Unexpected response code"
+        statuses["semantic_scholar"] = {
+            "status": status,
+            "http_code": response.status_code,
+            "reason": reason,
+        }
+    except Exception as exc:
+        statuses["semantic_scholar"] = {"status": "disconnected", "reason": str(exc)}
+
+    return {"sources": statuses}
+
+
+@app.post("/api/export/pdf")
+def export_pdf_report(payload: dict[str, Any]):
+    if canvas is None or letter is None:
+        raise HTTPException(status_code=500, detail="PDF dependency unavailable")
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    _, height = letter
+    y = height - 60
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(40, y, "ECHO Forensic Report")
+    y -= 24
+    pdf.setFont("Helvetica", 11)
+    paper = payload.get("paper", {})
+    risk = payload.get("risk_assessment", {})
+    lines = [
+        f"Paper: {paper.get('title', 'Unknown')}",
+        f"Verdict: {risk.get('verdict', 'Unknown')}",
+        f"Risk Score: {risk.get('risk_score', 'n/a')}",
+        "Top Findings:",
+    ]
+    for line in lines:
+        pdf.drawString(40, y, str(line)[:95])
+        y -= 18
+    for finding in risk.get("top_findings", [])[:8]:
+        pdf.drawString(60, y, f"- {finding}"[:100])
+        y -= 16
+    pdf.showPage()
+    pdf.save()
+    body = buffer.getvalue()
+    return {
+        "filename": f"echo-report-{uuid.uuid4().hex[:8]}.pdf",
+        "content_base64": base64.b64encode(body).decode("utf-8"),
+    }
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
