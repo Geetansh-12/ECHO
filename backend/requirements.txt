@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+openreview-py
+requests
+beautifulsoup4
+sentence-transformers
+networkx
+scipy
+numpy
+pydantic
