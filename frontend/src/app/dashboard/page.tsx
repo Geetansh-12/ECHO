@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import { 
@@ -22,11 +22,58 @@ import {
 
 import Report from "../../components/Report";
 
+interface HistoryItem {
+  id: number;
+  query: string;
+  venue_id: string;
+  risk_score: number;
+  verdict: string;
+  paper_title?: string | null;
+}
+
+interface StatsResponse {
+  total_analyses: number;
+  avg_risk_score: number;
+  high_risk_cases: number;
+  medium_risk_cases: number;
+  low_risk_cases: number;
+}
+
+interface AnalyzeResponse {
+  status: string;
+  paper?: {
+    title?: string;
+  };
+  results?: unknown;
+}
+
 export default function Dashboard() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [reportData, setReportData] = useState<any>(null);
+  const [reportData, setReportData] = useState<AnalyzeResponse | null>(null);
+  const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+
+  const loadAnalytics = async () => {
+    try {
+      const [statsRes, historyRes] = await Promise.all([
+        axios.get<StatsResponse>("http://localhost:8000/api/stats"),
+        axios.get<{ items: HistoryItem[] }>("http://localhost:8000/api/history?limit=5"),
+      ]);
+      setStats(statsRes.data);
+      setHistory(historyRes.data.items || []);
+    } catch {
+      // Keep dashboard usable even when telemetry endpoints are unavailable.
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadAnalytics();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,12 +84,17 @@ export default function Dashboard() {
     setReportData(null);
 
     try {
-      const response = await axios.post("http://localhost:8000/api/analyze", {
+      const response = await axios.post<AnalyzeResponse>("http://localhost:8000/api/analyze", {
         query: query
       });
       setReportData(response.data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "An error occurred connecting to the ECHO backend.");
+      void loadAnalytics();
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || "An error occurred connecting to the ECHO backend.");
+      } else {
+        setError("An unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }
@@ -81,7 +133,7 @@ export default function Dashboard() {
           }} className="hover:text-primary">
             <Database size={20} /> Explorer
           </Link>
-          <Link href="#" style={{ 
+          <Link href="/sources" style={{ 
             display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", 
             borderRadius: "8px", color: "var(--text-secondary)", textDecoration: "none",
             transition: "all 0.2s"
@@ -156,10 +208,10 @@ export default function Dashboard() {
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px", marginBottom: "48px" }}>
               {[
-                { title: "Papers Analyzed", value: "1,204", icon: FileWarning, color: "var(--accent-cyan)" },
-                { title: "Slop Reviews", value: "342", icon: Brain, color: "var(--accent-red)" },
-                { title: "Collusion Rings", value: "14", icon: Network, color: "var(--accent-purple)" },
-                { title: "Avg Specificity", value: "6.8/10", icon: TrendingUp, color: "var(--accent-green)" }
+                { title: "Papers Analyzed", value: stats?.total_analyses ?? "0", icon: FileWarning, color: "var(--accent-cyan)" },
+                { title: "High Risk Cases", value: stats?.high_risk_cases ?? "0", icon: Brain, color: "var(--accent-red)" },
+                { title: "Medium Risk Cases", value: stats?.medium_risk_cases ?? "0", icon: Network, color: "var(--accent-purple)" },
+                { title: "Avg Risk Score", value: `${stats?.avg_risk_score ?? 0}/100`, icon: TrendingUp, color: "var(--accent-green)" }
               ].map((stat, i) => (
                 <div key={i} className="glass-panel" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px", borderTop: `3px solid ${stat.color}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -169,6 +221,60 @@ export default function Dashboard() {
                   <strong className="mono" style={{ fontSize: "2rem", color: "var(--text-primary)" }}>{stat.value}</strong>
                 </div>
               ))}
+            </div>
+
+            <div style={{ marginBottom: "48px" }}>
+              <h2 style={{ marginBottom: "16px", fontSize: "1.5rem" }}>Recent Analyses</h2>
+              <div className="glass-panel" style={{ padding: "0", overflow: "hidden" }}>
+                {(history || []).length === 0 ? (
+                  <div style={{ padding: "20px", color: "var(--text-secondary)" }}>
+                    Run your first analysis to build a forensic timeline.
+                  </div>
+                ) : (
+                  history.map((entry, idx) => (
+                    <div
+                      key={entry.id}
+                      style={{
+                        padding: "16px 20px",
+                        borderBottom: idx === history.length - 1 ? "none" : "1px solid var(--border-subtle)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "16px",
+                      }}
+                    >
+                      <div>
+                        <div style={{ color: "var(--text-primary)", fontWeight: 600 }}>
+                          {entry.paper_title || entry.query}
+                        </div>
+                        <div className="text-secondary" style={{ fontSize: "0.85rem" }}>
+                          {entry.venue_id}
+                        </div>
+                      </div>
+                      <div className="mono" style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+                        Risk {entry.risk_score}
+                      </div>
+                      <div
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          border: "1px solid var(--border-color)",
+                          color:
+                            entry.verdict === "High Risk"
+                              ? "var(--accent-red)"
+                              : entry.verdict === "Medium Risk"
+                                ? "#f59e0b"
+                                : "var(--accent-green)",
+                          fontWeight: 600,
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        {entry.verdict}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
             {/* Risk Lanes */}

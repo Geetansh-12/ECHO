@@ -20,6 +20,46 @@ def fetch_paper_and_reviews(venue_id: str, paper_title: str) -> Dict[str, Any]:
     
     logger.info(f"Searching for paper '{paper_title}' in venue '{venue_id}'")
     
+    # --- HACKATHON DEMO MOCK DATA ---
+    # Intercept specific searches to guarantee rich data for the analyzers to demonstrate
+    if "open source in ai" in paper_title.lower() or "attention is all you need" in paper_title.lower():
+        title_to_use = "Position: The Role of Open Source in AI" if "open source" in paper_title.lower() else "Attention Is All You Need"
+        abstract_to_use = "We discuss the role of open-source software in artificial intelligence. Open-source models have democratized access to AI, but they also bring challenges related to safety, misuse, and alignment. We argue that open-source AI is crucial for transparent and reproducible research."
+        if "attention" in title_to_use.lower():
+            abstract_to_use = "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely."
+            
+        logger.info(f"Serving Hackathon Demo Data for: {title_to_use}")
+        return {
+            "paper_id": "demo_123",
+            "title": title_to_use,
+            "abstract": abstract_to_use,
+            "authors": ["Alice Smith", "Bob Jones"],
+            "reviews": [
+                {
+                    "id": "rev1",
+                    "signatures": ["Reviewer 1"],
+                    "text": "This paper presents a strong position. The arguments are well-supported by recent literature, particularly regarding the democratization of models. However, the section on safety could be expanded to include more empirical evidence of misuse. Overall, a solid contribution to the ongoing debate.",
+                    "rating": "8: Accept",
+                    "confidence": "4: Confident"
+                },
+                {
+                    "id": "rev2",
+                    "signatures": ["Reviewer 2"],
+                    "text": "The paper is well written and novel. It presents interesting results. The authors show that the proposed method is good. I recommend accepting the paper because it is well written and novel. Thank you.",
+                    "rating": "6: Weak Accept",
+                    "confidence": "3: Somewhat Confident"
+                },
+                {
+                    "id": "rev3",
+                    "signatures": ["Reviewer 3"],
+                    "text": f"{abstract_to_use} Therefore, the paper should be accepted because it says exactly this.",
+                    "rating": "10: Strong Accept",
+                    "confidence": "5: Very Confident"
+                }
+            ]
+        }
+    # --------------------------------
+    
     # Note: openreview-py search API can be tricky. We might need to iterate or use specific filters.
     # We will grab recent submissions for a venue as a proof of concept if search fails.
     

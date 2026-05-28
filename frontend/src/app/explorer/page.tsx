@@ -115,7 +115,7 @@ LEFT JOIN semantic_scholar.papers ss ON or.title = ss.title`
           }}>
             <Database size={20} className="text-purple" /> Explorer
           </Link>
-          <Link href="#" style={{ 
+          <Link href="/sources" style={{ 
             display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", 
             borderRadius: "8px", color: "var(--text-secondary)", textDecoration: "none",
             transition: "all 0.2s"
