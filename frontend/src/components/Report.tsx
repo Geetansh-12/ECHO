@@ -7,7 +7,18 @@ interface ReportProps {
 }
 
 export default function Report({ data }: ReportProps) {
-  if (!data || !data.results) return null;
+  if (!data) return null;
+
+  if (data.status === "partial" || !data.results) {
+    return (
+      <div className="animate-fade-in glass-panel" style={{ borderTop: "4px solid var(--accent-amber)", marginTop: "24px" }}>
+        <h2 style={{ marginBottom: "12px", color: "var(--accent-amber)" }}>Partial Match: {data.paper?.title}</h2>
+        <p className="text-secondary" style={{ fontSize: "0.95rem", lineHeight: "1.5" }}>
+          {data.message || "This paper was found on arXiv, but it doesn't have any public peer reviews on OpenReview. ECHO requires peer review text to run its full stylometric, entropy, and collusion ring analysis."}
+        </p>
+      </div>
+    );
+  }
 
   const { stylometry, specificity, collusion } = data.results;
 
