@@ -58,8 +58,8 @@ export default function Dashboard() {
   const loadAnalytics = async () => {
     try {
       const [statsRes, historyRes] = await Promise.all([
-        axios.get<StatsResponse>("http://localhost:8000/api/stats"),
-        axios.get<{ items: HistoryItem[] }>("http://localhost:8000/api/history?limit=5"),
+        axios.get<StatsResponse>("/api/stats"),
+        axios.get<{ items: HistoryItem[] }>("/api/history?limit=5"),
       ]);
       setStats(statsRes.data);
       setHistory(historyRes.data.items || []);
@@ -84,7 +84,7 @@ export default function Dashboard() {
     setReportData(null);
 
     try {
-      const response = await axios.post<AnalyzeResponse>("http://localhost:8000/api/analyze", {
+      const response = await axios.post<AnalyzeResponse>("/api/analyze", {
         query: query
       });
       setReportData(response.data);
