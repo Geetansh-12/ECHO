@@ -10,10 +10,13 @@
 
 ## Screenshots
 
-![ECHO Report](./screenshots/report.png)
-
+### Telemetry Forensic Dashboard
 ![ECHO Dashboard](./screenshots/dashboard.png)
 
+### Forensic Report & Visualizer
+![ECHO Report](./screenshots/report.png)
+
+### Welcome & Landing Experience
 ![ECHO Landing](./screenshots/landing.png)
 
 ---
