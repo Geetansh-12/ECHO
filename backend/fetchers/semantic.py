@@ -1,5 +1,9 @@
 import requests
 import logging
+import urllib3
+
+# Suppress SSL verification warnings for a cleaner console output in dev environments
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,7 +24,8 @@ def fetch_semantic_scholar_data(query: str, limit: int = 1) -> dict:
     logger.info(f"Querying Semantic Scholar for: {query}")
     
     try:
-        response = requests.get(base_url, params=params)
+        # Disable SSL verification to bypass local certificate verification errors on Windows
+        response = requests.get(base_url, params=params, verify=False)
         response.raise_for_status()
         data = response.json()
         

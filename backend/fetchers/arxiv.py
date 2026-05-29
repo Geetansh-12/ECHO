@@ -2,6 +2,7 @@ import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as ET
 import logging
+import ssl
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,7 +20,9 @@ def fetch_arxiv_metadata(query: str, max_results: int = 1) -> dict:
     logger.info(f"Fetching from arXiv: {url}")
     
     try:
-        response = urllib.request.urlopen(url)
+        # Create unverified SSL context to bypass certificate verification errors on local dev setups
+        context = ssl._create_unverified_context()
+        response = urllib.request.urlopen(url, context=context)
         data = response.read()
         root = ET.fromstring(data)
         

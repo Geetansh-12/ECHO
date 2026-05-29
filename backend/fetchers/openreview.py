@@ -22,6 +22,40 @@ def fetch_paper_and_reviews(venue_id: str, paper_title: str) -> Dict[str, Any]:
     
     # --- HACKATHON DEMO MOCK DATA ---
     # Intercept specific searches to guarantee rich data for the analyzers to demonstrate
+    if "denoising diffusion" in paper_title.lower():
+        title_to_use = "Denoising Diffusion Probabilistic Models"
+        abstract_to_use = "We present high quality image synthesis results using diffusion probabilistic models, a class of latent variable models inspired by considerations from non-equilibrium thermodynamics. Our best results are obtained by training on a weighted variational bound designed according to a novel connection between diffusion models and denoising score matching with Langevin dynamics."
+        logger.info(f"Serving Hackathon Demo Data for: {title_to_use}")
+        return {
+            "paper_id": "demo_ddpm",
+            "title": title_to_use,
+            "abstract": abstract_to_use,
+            "authors": ["Jonathan Ho", "Ajay Jain", "Pieter Abbeel"],
+            "reviews": [
+                {
+                    "id": "ddpm_rev1",
+                    "signatures": ["Reviewer 1"],
+                    "text": "This paper presents a very impressive result in generative modeling. The proposed connection between diffusion models and denoising score matching with Langevin dynamics is elegant and well-executed. The generated images on CIFAR-10 and LSUN show extremely high quality, competing with state-of-the-art GANs. I strongly recommend acceptance.",
+                    "rating": "9: Strong Accept",
+                    "confidence": "5: Very Confident"
+                },
+                {
+                    "id": "ddpm_rev2",
+                    "signatures": ["Reviewer 2"],
+                    "text": "The authors present high quality image synthesis results using diffusion probabilistic models. The paper is well written and novel. The training on a weighted variational bound is technically sound and the qualitative results are remarkable. I recommend acceptance because of its significant impact on the field of generative models.",
+                    "rating": "8: Accept",
+                    "confidence": "4: Confident"
+                },
+                {
+                    "id": "ddpm_rev3",
+                    "signatures": ["Reviewer 3"],
+                    "text": "The paper introduces a class of latent variable models inspired by non-equilibrium thermodynamics for image generation. While the results are excellent, the sampling speed of these models remains a major limitation, requiring hundreds of neural network evaluations. The authors should discuss potential acceleration techniques. Despite this, it is a very strong paper.",
+                    "rating": "8: Accept",
+                    "confidence": "4: Confident"
+                }
+            ]
+        }
+        
     if "open source in ai" in paper_title.lower() or "attention is all you need" in paper_title.lower():
         title_to_use = "Position: The Role of Open Source in AI" if "open source" in paper_title.lower() else "Attention Is All You Need"
         abstract_to_use = "We discuss the role of open-source software in artificial intelligence. Open-source models have democratized access to AI, but they also bring challenges related to safety, misuse, and alignment. We argue that open-source AI is crucial for transparent and reproducible research."
