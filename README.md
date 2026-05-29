@@ -10,14 +10,11 @@
 
 ## Screenshots
 
-### Welcome & Landing Experience
-![ECHO Landing](./screenshots/landing.png)
+![ECHO Report](./screenshots/report.png)
 
-### Telemetry Forensic Dashboard
 ![ECHO Dashboard](./screenshots/dashboard.png)
 
-### Forensic Report & Visualizer
-![ECHO Report](./screenshots/report.png)
+![ECHO Landing](./screenshots/landing.png)
 
 ---
 
@@ -121,7 +118,7 @@ Backend:
 
 ## Setup & Run
 
-**Live demo:** [deploy before submission and paste URL here]
+**Live demo:** [https://echo-frontend-6xnv.onrender.com](https://echo-frontend-6xnv.onrender.com)
 
 ### 1. Backend
 
