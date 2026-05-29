@@ -1,8 +1,8 @@
-from sentence_transformers import SentenceTransformer
 import hashlib
 import logging
 import math
 import re
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,9 +13,22 @@ class Embedder:
     
     def __new__(cls):
         if cls._instance is None:
-            logger.info("Loading local HuggingFace embedding model (all-MiniLM-L6-v2)...")
             cls._instance = super(Embedder, cls).__new__(cls)
+            
+            # Resilient production/low-resource bypass:
+            # Force local lexical fallback to avoid PyTorch imports and heavy model downloads
+            # that cause Out-Of-Memory (OOM) crashes and 10-minute timeouts on Render Free tier.
+            if os.getenv("RENDER") or os.getenv("USE_FALLBACK_EMBEDDER") == "true":
+                logger.info("Production/Render environment detected. Enabling lightweight lexical fallback embedder to save RAM and boot instantly!")
+                cls._instance.model = None
+                cls._instance.using_fallback = True
+                return cls._instance
+                
+            logger.info("Loading local HuggingFace embedding model (all-MiniLM-L6-v2)...")
             try:
+                # Dynamic import to avoid loading heavy torch/sentence_transformers modules on boot
+                from sentence_transformers import SentenceTransformer
+                
                 # all-MiniLM-L6-v2 is fast, small, and good for general semantic similarity.
                 # If it is not cached and the network is unavailable, fall back to a
                 # deterministic local embedding so the forensic pipeline still runs.
