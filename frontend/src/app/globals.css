@@ -2009,7 +2009,7 @@ input, select, textarea {
 .premium-page {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
   background:
     radial-gradient(ellipse at 50% -10%, rgba(6, 182, 212, 0.18), transparent 34%),
     radial-gradient(ellipse at 82% 12%, rgba(139, 92, 246, 0.14), transparent 30%),
