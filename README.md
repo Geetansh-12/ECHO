@@ -67,7 +67,7 @@ This flags reviews that use broad praise without actual technical depth.
 
 ### Collusion
 Constructs a directed graph of papers, authors, and reviewers, running NetworkX under the hood to find tight co-review cycles.
-*Feature:* If live API data is sparse for a searched paper, the engine injects a seeded fallback dataset to ensure the interactive D3 graph is fully populated for immediate visual inspection during demos.
+*Feature:* Real when the paper has reviews on OpenReview; seeded visualization otherwise so the UI isn't empty.
 
 ### APIs & Data Sources
 Queries live data from open academic APIs:
@@ -200,4 +200,4 @@ We built ECHO because trust in academic peer review is decaying under cheap AI t
 
 ---
 
-Built for hackathon judging, but designed like a serious AI integrity product.
+Designed like a serious AI integrity product.
