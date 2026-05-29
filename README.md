@@ -2,89 +2,82 @@
   <h1>ECHO</h1>
   <h3>Know What's Real.</h3>
   <p>
-    A premium AI research-forensics platform for detecting suspicious peer-review behavior across
-    OpenReview, arXiv, and Semantic Scholar.
-  </p>
-  <p>
-    <strong>Generic reviews. Low-specificity feedback. Stylometry similarity. Collusion patterns.
-    Reviewer behavior anomalies.</strong>
+    Detects suspicious peer-review behavior—like generic reviews, low-specificity feedback, text similarity, and collusion patterns—across OpenReview, arXiv, and Semantic Scholar.
   </p>
 </div>
 
 ---
 
-## Why ECHO Exists
+## Screenshots
 
-Scientific peer review is one of the highest-leverage trust systems in the world. But as review volume grows and AI-generated text becomes cheap, program chairs need better tools than manual spot checks and intuition.
+### Welcome & Landing Experience
+![ECHO Landing](./screenshots/landing.png)
 
-ECHO is a forensic command center for scientific integrity. It takes a paper or title, gathers available open research metadata, analyzes the review text, and generates an evidence-backed report that helps chairs decide what deserves closer inspection.
+### Telemetry Forensic Dashboard
+![ECHO Dashboard](./screenshots/dashboard.png)
 
-The goal is not to replace human judgment. The goal is to make suspicious patterns visible.
+### Forensic Report & Visualizer
+![ECHO Report](./screenshots/report.png)
 
-## What It Detects
+---
 
-ECHO looks for five classes of risk:
+## Project Context
 
-- Generic reviews: reviews that rely on broad praise without technical grounding.
-- Low-specificity reviews: reviews with weak domain density and low vocabulary entropy.
-- Stylometry similarity: reviews that are unusually close to the paper text or abstract.
-- Collusion patterns: reviewer-paper-author graph structures that suggest tight coordination.
-- Suspicious reviewer behavior: burst timing, repeated language patterns, and weak diversity signals.
+Scientific peer review is a critical trust system, but scaling it has introduced issues. As submission volumes climb and AI-generated reviews become cheaper, spot-checking manually doesn't scale. 
 
-## Product Experience
+ECHO exposes these anomalies. It pulls paper metadata and review text, analyzes them, and flags patterns that warrant a closer look. The objective is to make coordination and low-effort reviews visible so human chairs can make informed decisions.
 
-The frontend has been redesigned as a premium, futuristic SaaS product inspired by Apple, Vercel, Linear, Perplexity, and Palantir-style intelligence dashboards.
+---
 
-It includes:
+## Targeted Anomalies
 
-- Cinematic landing page for ECHO.
-- Floating glass navigation.
-- Real "Analyze" CTA wired to the dashboard analysis flow.
-- AI-style search and thinking state.
-- Intelligence dashboard preview with Recharts visualizations.
-- Premium forensic report layout with verdict gauge, risk cards, findings, actions, graph map, and evidence cards.
-- Live source-health page that explains whether providers are connected, rate-limited, or offline.
-- Home navigation from ECHO branding across the app.
+ECHO detects four main classes of risk:
 
-## Core Analysis Engines
+* **Low-Specificity & Generic Text**: Reviews relying on broad academic filler language with low vocabulary entropy or weak domain density.
+* **Stylometry Similarity**: Reviews whose text is suspiciously close to the paper's own abstract or content.
+* **Collusion Patterns**: Reviewer-paper-author graphs with tight cycles suggesting coordinated rings.
+* **Behavioral Anomalies**: Burst timing patterns, repeated template phrases, or unusually weak reviewer diversity.
 
-### 1. Stylometry Fingerprinting
+---
 
-ECHO embeds the paper text and review text, then compares them with cosine similarity. High similarity can indicate templated or coordinated review behavior.
+## Frontend Interface
 
-The system first tries to use the local HuggingFace `all-MiniLM-L6-v2` SentenceTransformer model. If the model is not cached and the environment cannot reach HuggingFace, ECHO falls back to a deterministic local lexical embedder so analysis still works offline instead of crashing.
+The UI is a dark-mode dashboard inspired by modern developer platforms, giving clear access to forensics without clutter:
 
-### 2. Specificity Entropy Scanner
+* **Interactive Landing & Search**: A modern entryway featuring an active search bar and real-time thinking state animations.
+* **Forensic Command Dashboard**: Displays the overall verdict gauge, timeline charts, and actionable risk cards.
+* **Visual Graph Map & Reports**: Renders an interactive D3 collusion graph, detailed findings, and export options (PDF and JSON).
+* **Live Status Monitoring**: A dedicated source-health page showing real-time connectivity states of downstream academic APIs.
 
-The specificity analyzer estimates how grounded a review is by measuring:
+---
 
-- Vocabulary diversity.
-- Domain-specific word density.
-- Generic academic filler language.
+## Analysis Engines
 
-Low specificity can indicate AI-generated or low-effort peer review.
+### Stylometry
+We compare the abstract with review text using cosine similarity to detect templated or model-coordinated writing.
+It loads a local HuggingFace `all-MiniLM-L6-v2` transformer by default. If HuggingFace is blocked or offline, it falls back to a local lexical similarity engine so analyses never fail.
 
-### 3. Collusion Graph Detector
+### Specificity
+Estimates how technical a review is by checking:
+* Vocabulary entropy.
+* Domain-specific vocabulary density.
+* Usage frequency of academic filler phrases.
 
-ECHO builds a directed graph of papers, authors, and reviewers, then uses NetworkX to inspect suspicious short cycles and relationship patterns.
+This flags reviews that use broad praise without actual technical depth.
 
-The report renders this as an interactive graph so users can inspect the structure visually.
+### Collusion
+Constructs a directed graph of papers, authors, and reviewers, running NetworkX under the hood to find tight co-review cycles.
+*Feature:* If live API data is sparse for a searched paper, the engine injects a seeded fallback dataset to ensure the interactive D3 graph is fully populated for immediate visual inspection during demos.
 
-### 4. Cross-Source Intelligence
+### APIs & Data Sources
+Queries live data from open academic APIs:
+* **OpenReview**: Fetches submissions and review text.
+* **arXiv**: Gathers preprint metadata.
+* **Semantic Scholar**: Resolves citation and graph relationships.
 
-ECHO is designed around open research infrastructure:
+---
 
-- OpenReview for paper submissions and public reviews.
-- arXiv for preprint metadata.
-- Semantic Scholar for citation and graph metadata.
-
-The source-health page checks these providers live and explains provider state clearly:
-
-- Connected: the API responded.
-- Rate limited: the provider is reachable but temporarily throttling requests.
-- Offline: the probe could not reach the provider.
-
-## Architecture
+## Repository Structure
 
 ```text
 ECHO
@@ -99,7 +92,7 @@ ECHO
 │
 └── frontend
     ├── Next.js App Router
-    ├── React 19
+    ├── React 19.2.4
     ├── Tailwind CSS
     ├── Framer Motion
     ├── Recharts
@@ -108,192 +101,102 @@ ECHO
     └── Premium glassmorphic SaaS UI
 ```
 
+---
+
 ## Tech Stack
 
 Frontend:
-
-- Next.js 16
-- React 19
-- Tailwind CSS 4
-- Framer Motion
-- Recharts
-- D3
-- Lucide React
-- Radix Slot
-- class-variance-authority
-- clsx
-- tailwind-merge
+* **Core Framework**: Next.js 15 (App Router) & React 19.2.4.
+* **Styling**: Tailwind CSS v4.
+* **Data Visualization**: Recharts & D3.
+* **Animations**: Framer Motion.
 
 Backend:
+* **Web Server**: Python & FastAPI.
+* **AI & Math**: sentence-transformers, NumPy, and SciPy.
+* **Graph & Storage**: NetworkX and SQLite.
+* **Reporting**: ReportLab (PDF generation).
 
-- FastAPI
-- Python
-- sentence-transformers
-- NetworkX
-- SciPy
-- NumPy
-- Requests
-- SQLite
-- ReportLab for PDF export
+---
 
-## Quick Start
+## Setup & Run
 
-### 1. Start the backend
+**Live demo:** [deploy before submission and paste URL here]
+
+### 1. Backend
 
 ```bash
 cd backend
-
 python -m venv venv
 venv\Scripts\activate
-
 pip install -r requirements.txt
 python -m uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-Backend:
+Backend resolves locally to: `http://127.0.0.1:8000`
 
-```text
-http://127.0.0.1:8000
-```
-
-### 2. Start the frontend
-
-In a second terminal:
+### 2. Frontend
 
 ```bash
 cd frontend
-
 npm install
 npm run dev -- --hostname 127.0.0.1 --port 3001
 ```
 
-Frontend:
+Frontend resolves locally to: `http://127.0.0.1:3001`
 
-```text
-http://127.0.0.1:3001
-```
+Next.js proxies requests: `/api/*` resolves to `http://127.0.0.1:8000/api/*`
 
-The frontend proxies API requests through Next.js:
+---
 
-```text
-/api/* -> http://127.0.0.1:8000/api/*
-```
+## Demo Scenario
 
-## Demo Flow
+For a reliable demo, search for **`Attention Is All You Need`** or **`Denoising Diffusion Probabilistic Models`** on the homepage:
 
-For a reliable demo, use:
+* **Presentation Pitch**: Start on the landing page, showing ECHO's position against low-effort reviews and AI slop.
+* **One-Click Analysis**: Type the query, click "Analyze", and watch the real-time thinking states resolve.
+* **Forensic Inspection**: Explore the dashboard cards (verdict gauge, risk sliders, timelines, D3 collusion graph).
+* **System Health**: Visit the source-health page to show connectivity statuses of the academic APIs.
 
-```text
-Attention Is All You Need
-```
+---
 
-Suggested judging path:
+## Production Resilience
 
-1. Open `http://127.0.0.1:3001`.
-2. Show the premium landing page and product positioning.
-3. Click `Analyze`.
-4. The dashboard opens with a seeded query and runs the backend analysis.
-5. Walk through the forensic report:
-   - Overall verdict.
-   - Risk breakdown.
-   - Stylometry signal.
-   - Specificity signal.
-   - Collusion graph.
-   - Evidence cards.
-   - Recommended actions.
-6. Open the Sources page to show live provider health.
+* **Offline Embeddings**: Automatically falls back to a local lexical similarity engine if HuggingFace is blocked.
+* **Non-Fatal Storage**: SQLite failures are handled gracefully, returning active reports even if storage is locked.
+* **Clean Builds**: Production builds avoid remote font loading, ensuring faster execution and compile speeds.
+* **Format Exports**: Detailed analyses can be exported directly to JSON or generated as print-ready PDF reports.
 
-## Reliability Features
+---
 
-ECHO includes practical hackathon-grade hardening:
+## Code Validation
 
-- Offline-safe embedding fallback if HuggingFace cannot be reached.
-- SQLite persistence is non-fatal, so analysis still returns if local storage is locked or unavailable.
-- Frontend uses a proxy path instead of hard-coding backend URLs into UI calls.
-- Production build avoids remote Google font fetching.
-- Source-health states are truthful and explained.
-- PDF and JSON exports are available from reports.
-
-## Verification
-
-The latest pushed version was verified with:
-
+Verified with:
 ```bash
 npm run lint
 npx next build --webpack
 ```
 
-Runtime smoke checks:
+Smoke checks:
+* `GET  /` -> 200
+* `POST /api/analyze` -> 200
+* `GET  /api/sources/health` -> 200
 
-```text
-GET  /                         -> 200
-POST /api/analyze              -> 200
-GET  /api/sources/health       -> 200
-```
+Verified commit: `c332c82897083c39b16d64255f27671ef914a5b6`
 
-Latest verified commit on `main`:
+---
 
-```text
-c332c82897083c39b16d64255f27671ef914a5b6
-```
+## API Endpoints
 
-## API Overview
+* `POST /api/analyze` - Queries metadata, runs stylometry, specificity, and collusion checks.
+* `GET /api/sources/health` - Retrieves live status for OpenReview, arXiv, and Semantic Scholar.
+* `POST /api/export/pdf` - Returns a base64 encoded PDF report.
 
-### Analyze a paper
+---
 
-```http
-POST /api/analyze
-Content-Type: application/json
+## Evaluation Focus
 
-{
-  "query": "Attention Is All You Need"
-}
-```
-
-Returns:
-
-- Paper metadata.
-- Stylometry results.
-- Specificity results.
-- Collusion graph.
-- Risk assessment.
-- Top findings.
-- Recommended actions.
-
-### Source health
-
-```http
-GET /api/sources/health
-```
-
-Returns live status for:
-
-- OpenReview
-- arXiv
-- Semantic Scholar
-
-### Export report PDF
-
-```http
-POST /api/export/pdf
-```
-
-Returns a base64 encoded PDF report.
-
-## Why It Can Win
-
-ECHO is more than a dashboard. It is a complete research-integrity workflow:
-
-- Clear real-world problem.
-- Multi-source open-data strategy.
-- Actual backend analysis, not a static mockup.
-- Premium product-grade interface.
-- Explainable forensic report.
-- Graph intelligence layer.
-- Offline resilience.
-- Judge-friendly demo path.
-
-The product tells a strong story: scientific integrity needs an intelligence layer, and ECHO is a credible first version of that layer.
+We built ECHO because trust in academic peer review is decaying under cheap AI text. It runs actual, deterministic stylometry and graph math in the backend rather than using mocked frontend wrappers. It gives chairs clear, visual, and exportable evidence. It doesn't break if a third-party API is rate-limited or offline. Ultimately, it makes coordination and low-effort review patterns visible so human editors can make better decisions.
 
 ---
 
