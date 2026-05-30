@@ -129,6 +129,7 @@ def analyze_paper(request: AnalyzeRequest):
     
     # 1. Fetch paper and reviews from OpenReview
     or_data = fetch_paper_and_reviews(venue_id, query)
+    data_state = "live"
     
     if "error" in or_data:
         logger.warning("Paper not found on OpenReview, trying arXiv...")
@@ -138,6 +139,7 @@ def analyze_paper(request: AnalyzeRequest):
             # Resilient Hackathon Demo fallback: generate a smart mock dataset using the query as the title
             # so the dashboard never shows an error and always demonstrates full analytical features.
             logger.warning("Paper not found on arXiv. Generating a smart demo mock dataset instead...")
+            data_state = "mocked"
             or_data = {
                 "paper_id": "demo_resilient_mock",
                 "title": query,
@@ -171,6 +173,7 @@ def analyze_paper(request: AnalyzeRequest):
             # Upgrade arXiv paper metadata with realistic, tailored reviews so the stylometry,
             # specificity, and collusion graph analyzers have rich data to perform a full, gorgeous analysis.
             logger.info("Upgrading arXiv paper with generated reviews for a complete analysis...")
+            data_state = "arxiv_generated"
             or_data = {
                 "paper_id": arxiv_data.get("id", "arxiv_123"),
                 "title": arxiv_data.get("title", query),
@@ -225,6 +228,7 @@ def analyze_paper(request: AnalyzeRequest):
 
     response = {
         "status": "success",
+        "data_state": data_state,
         "paper": {
             "title": paper_title,
             "abstract": abstract,
